@@ -1,5 +1,5 @@
-from ollama import Client
-from typing import List, Callable, Dict, Any
+import ollama
+from typing import List, Callable
 
 class LocalStrandAgent:
     def __init__(self, model: str, tools: List[Callable], system_prompt: str):
@@ -7,19 +7,15 @@ class LocalStrandAgent:
         self.tools = tools
         self.system_prompt = system_prompt
         self.messages = [{"role": "system", "content": system_prompt}]
-        
-        # Explicitly connect to localhost to ensure model loads in RAM
-        self.client = Client(host='http://localhost:11434')
-        
-        # Create a mapping for tool execution
+        self.client = ollama.Client(host='http://localhost:11434')
         self.tool_map = {tool.__name__: tool for tool in self.tools}
 
     def chat(self, user_query: str):
         self.messages.append({"role": "user", "content": user_query})
 
         while True:
-            # 1. THINK (Using explicit client to force local load)
-            print(f"🤔 Thinking with {self.model} on localhost...")
+            # 1. THINK
+            print(f"🤔 {self.model} is thinking...")
             response = self.client.chat(
                 model=self.model,
                 messages=self.messages,
@@ -29,24 +25,24 @@ class LocalStrandAgent:
             message = response['message']
             self.messages.append(message)
 
-            # 2. PLAN & ACT
+            # 2. ACT
             if message.get('tool_calls'):
                 for tool in message['tool_calls']:
                     function_name = tool['function']['name']
                     arguments = tool['function']['arguments']
                     
                     if function_name in self.tool_map:
-                        print(f"🛠️ Tool Call: {function_name}")
-                        function_to_call = self.tool_map[function_name]
-                        result = function_to_call(**arguments)
+                        print(f"🛠️ Executing Tool: {function_name}")
+                        try:
+                            result = self.tool_map[function_name](**arguments)
+                        except Exception as e:
+                            result = f"Tool Error: {e}"
                         
-                        # 3. REFLECT
                         self.messages.append({
                             "role": "tool",
                             "content": str(result),
                         })
             else:
-                # 4. FINAL ANSWER
                 return message['content']
 
     def update_model(self, new_model: str):

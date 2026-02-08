@@ -10,7 +10,6 @@ def read_cv(file_path: str) -> str:
     """
     try:
         # Converts PDF layout (columns) to Markdown text
-        md_text = pymupdf4llm.to_markdown(file_path)
-        return md_text
+        return pymupdf4llm.to_markdown(file_path)
     except Exception as e:
         return f"Failed to read PDF: {str(e)}"
