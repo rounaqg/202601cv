@@ -1,0 +1,5 @@
+{
+    "Qwen3-4b": "qwen/qwen3-4b-2507",
+    "GPT_OSS": "openai/gpt-oss-20b",
+    "Gemma3-12b": "google/gemma-3-12b"
+}
